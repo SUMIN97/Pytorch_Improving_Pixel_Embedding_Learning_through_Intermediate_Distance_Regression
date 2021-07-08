@@ -1,0 +1,12 @@
+./Data/
+./ipynb_checkpoints/
+./bfs_png_neighbors/
+./final_imgs/
+./H5/
+./middle_imgs/
+./models/
+./png_neighbors/
+./dataloader.ipynb
+./__pycache__/
+./idea/
+./unet/__pycache__/
