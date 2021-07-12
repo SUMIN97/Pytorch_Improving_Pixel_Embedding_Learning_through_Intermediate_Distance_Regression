@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from postprocessing import *
 import os
-from junsang_loss2 import *
+import torch.nn as nn
 
 
 class Trainer():
@@ -61,8 +61,7 @@ class Trainer():
                 b_inter, b_intra = 0.0, 0.0
 
                 for i in range(bs):
-                    means, intra = self.get_means_intra(labelmap[i], norm_embedding[i])
-                    means = torch.stack(means, dim=0)
+                    means, intra = self.get_means_split_intra(labelmap[i], norm_embedding[i])
                     inter = self.get_inter(means, neighbor[i], self.E_channels)
 
                     b_intra += intra
@@ -99,9 +98,32 @@ class Trainer():
                     'optimizer': self.wnet_optimizer.state_dict()
                 }, os.path.join(self.save_model_path, 'epoch_{}_{:.4f}.pth'.format(epoch, epoch_min_loss)))
 
+    def get_means_and_together_intra(self, labelmap, embedding):
+        max_label = int(labelmap.unique().max().item())
+        means = []
+        labels_intra_sum = 0.0
 
+        embedding_flat = embedding.permute(1, 2, 0).view(-1, self.E_channels)
 
-    def get_means_intra(self, labelmap, embedding):
+        #label 이 0 인 bg 경우도 포함
+        for label in range(0, max_label +1):
+            mask = (labelmap == label).flatten()
+            count = mask.sum()
+
+            mask_embedding = embedding_flat[mask, :]
+            mean = torch.sum(mask_embedding, dim=0) / count
+            means.append(mean)
+
+        means = torch.stack(means, dim=0)
+        means = F.normalize(means, p=2, dim=1)
+        labelmap_flat = labelmap.flatten().long()
+        means_expand = means[labelmap_flat]
+        #bio
+        loss_inner = torch.mean(1 - self.cos_sim(means_expand, embedding_flat))
+
+        return means, loss_inner
+
+    def get_means_split_intra(self, labelmap, embedding):
         max_label = int(labelmap.unique().max().item())
         norm_means = []
         labels_intra_sum = 0.0
@@ -126,6 +148,7 @@ class Trainer():
 
         #distance regression 방식
         intra_mean = labels_intra_sum / (1 + max_label)
+        norm_means = torch.stack(norm_means, dim=0)
 
         return norm_means, intra_mean
 
@@ -188,8 +211,7 @@ class Trainer():
             b_inter, b_intra = 0.0, 0.0
 
             for i in range(bs):
-                means, mean_intra = self.get_means_intra(labelmap[i], norm_embedding[i])
-                means = torch.stack(means, dim=0)
+                means, mean_intra = self.get_means_split_intra(labelmap[i], norm_embedding[i])
                 mean_inter = self.get_inter(means, neighbor[i], self.E_channels)
 
                 b_intra += mean_intra

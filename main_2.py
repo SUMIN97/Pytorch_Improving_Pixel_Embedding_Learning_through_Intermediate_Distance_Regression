@@ -7,7 +7,6 @@ import torchvision.transforms as transforms
 from dataset import PlantDataset
 
 from training2 import Trainer2
-# from model3 import Wnet
 from model2 import W_Net
 
 train_rgbs_path = glob('/home/lab/ssd1/Plant/Improving_Pixel_Embedding_Learning/data/raw/CVPPP2017_LSC_training/A*/*_rgb.png')
@@ -20,7 +19,7 @@ neighbors_dir = './neighbors'
 
 
 
-save_model_path = '/home/lab/ssd1/Plant/PEIS/models/Model2_Bcnorm2_InterSumChange_A1234'
+save_model_path = '/home/lab/ssd1/Plant/PEIS/models/IntraTogetherInterSplit_A1234'
 if os.path.isdir(save_model_path) is False:
     os.mkdir(save_model_path)
 
@@ -47,8 +46,7 @@ val_loader = torch.utils.data.DataLoader(val_ds, batch_size=1, shuffle=True)
 
 #model
 wnet = W_Net(input_dim, Dfeature_channels, E_channels)
-# checkpoint = torch.load('/home/lab/ssd1/Plant/PEIS/models/Model2_Bc2_Lamda2_1_ResizeNearest/epoch_501.pth')
-# wnet.load_state_dict(checkpoint['W_Net'])
+
 
 wnet_optimizer = torch.optim.Adam(wnet.parameters(), lr = lr)
 

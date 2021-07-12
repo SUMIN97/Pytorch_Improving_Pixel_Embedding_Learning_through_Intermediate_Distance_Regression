@@ -20,10 +20,14 @@ class TestDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, idx):
         name = os.path.basename(self.rgbs_path[idx]).split('_')[0]
+        A = self.rgbs_path[idx].split('/')[-3]
         image = Image.open(self.rgbs_path[idx])
         image = self.transform(image)
 
-        # get original data type
+        #total channel
+        # image = torch.div(image - torch.mean(image), torch.std(image))
+
+        # each channel
         orig_dtype = image.dtype
         image_mean = torch.mean(image, dim=(-1, -2, -3))
         stddev = torch.std(image, axis=(-1, -2, -3))
@@ -36,7 +40,7 @@ class TestDataset(torch.utils.data.Dataset):
         # make sure that image output dtype  == input dtype
         assert image.dtype == orig_dtype
 
-        return (image, name)
+        return (image, A, name)
 
     def __len__(self):
         return len(self.rgbs_path)
@@ -63,8 +67,8 @@ class PlantDataset(torch.utils.data.Dataset):
     def __getitem__(self, idx):
         image = Image.open(self.rgbs_path[idx])
         image = self.transform(image)
-        image = torch.div(image - torch.mean(image),  torch.std(image))
-        """
+        # image = torch.div(image - torch.mean(image),  torch.std(image))
+
         # get original data type
         orig_dtype = image.dtype
         image_mean = torch.mean(image, dim=(-1, -2, -3))
@@ -77,7 +81,7 @@ class PlantDataset(torch.utils.data.Dataset):
         image = torch.div(image, adjusted_stddev)
         # make sure that image output dtype  == input dtype
         assert image.dtype == orig_dtype
-        """
+
 
 
         name = os.path.basename(self.rgbs_path[idx]).split('_')[0]
